@@ -11,6 +11,12 @@ export const Login = () => {
     password: "",
   });
 
+
+
+  
+
+
+
   const submit = (e) => {
     e.preventDefault();
 
@@ -23,6 +29,11 @@ export const Login = () => {
     })
       .then((respon) => respon.json())
       .then((userData) => {
+        console.log(userData);
+        if(userData.success){
+          window.location.href = (window.location.origin);
+          localStorage.setItem('userHome',JSON.stringify({user:true}))
+        }
         localStorage.setItem(
           "user",
           JSON.stringify({ token: userData.token, id: userData.data.id })

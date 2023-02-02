@@ -12,6 +12,9 @@ import "../styleAll.scss";
 import Slider from "@mui/material/Slider";
 import { Link } from "react-router-dom";
 import logo from "../imgs/logojon.svg";
+import createLogo from "../imgs/creatememories.svg";
+import editMemories from "../imgs/editmemories.svg";
+import myPlaylist from "../imgs/myplaylist.svg";
 import { Stack } from "@mui/system";
 import KeyboardDoubleArrowLeft from "@mui/icons-material/KeyboardDoubleArrowLeft";
 import KeyboardDoubleArrowRight from "@mui/icons-material/KeyboardDoubleArrowRight";
@@ -24,12 +27,36 @@ import { Add, Delete, Edit, Search } from "@mui/icons-material";
 import memoryImg from "../imgs/memory.jpg";
 import like from "../imgs/like.svg";
 import dontLike from "../imgs/don'tLike.svg";
+import Close from "@mui/icons-material/Close";
+import music from "../music/a.m4a";
 
 export const Home = () => {
+  const userHomeKey = JSON.parse(localStorage.getItem("userHome"));
+  if (userHomeKey?.user) {
+  } else {
+    window.location.href = window.location.origin + "/login";
+  }
+
+  React.useEffect(() => {
+    const userToken = JSON.parse(localStorage.getItem("user"));
+
+    fetch("https://api.mymemories.uz/api/v1/memories/all/", {
+      method: "GET",
+      headers: {
+        Authorization: "Token " + userToken.token,
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => console.log(data));
+  }, []);
+
   const duration = 200;
   const [position, setPosition] = React.useState(2);
   const [pausa, setPausa] = React.useState(true);
   const musicPlay = React.useRef(null);
+
+  const [createTheme, setCreateTheme] = React.useState(false);
+  const [editTheme, setEditTheme] = React.useState(false);
 
   function formatDuration(value) {
     const minute = Math.floor(value / 60);
@@ -56,28 +83,279 @@ export const Home = () => {
   };
 
   function play() {
-    setPausa(!pausa);        
-    // if (musicPlay.current) {
-    //   if (pausa) {
-    //     musicPlay.current.play();
-    //     setInterval(() => {
-    //       console.log(position , musicPlay.current.currentTime * (100 / musicPlay.current.duration));
-    //       if (position > musicPlay.current.currentTime + 1) {
-    //         musicPlay.current.currentTime = position;
-    //       }
-    //       let seekPosition = Math.round(
-    //         musicPlay.current.currentTime * (100 / musicPlay.current.duration)
-    //       );
-    //       setPosition(seekPosition);
-    //     }, 1000);
-    //   } else {
-    //     musicPlay.current.pause();
-    //   }
-    // }
+    setPausa(!pausa);
+    if (musicPlay.current) {
+      if (pausa) {
+        musicPlay.current.play();
+        setInterval(() => {
+          if (position > musicPlay.current.currentTime + 1) {
+            musicPlay.current.currentTime = position;
+          }
+          let seekPosition = Math.round(
+            musicPlay.current.currentTime * (100 / musicPlay.current.duration)
+          );
+          setPosition(seekPosition);
+        }, 1000);
+      } else {
+        musicPlay.current.pause();
+      }
+    }
   }
+
+  const userToken = JSON.parse(localStorage.getItem("user"));
+  const [img, setImg] = React.useState();
+
+  const imgUpdate = (e) => {
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append("name", file.name);
+    formData.append("file", file);
+
+    fetch("https://api.mymemories.uz/api/v1/files/", {
+      method: "POST",
+      headers: {
+        Authorization: "Token " + userToken.token,
+        "Content-Type": file.type,
+      },
+      body: formData,
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.success) {
+          setImg([data.data.id, ...img]);
+        }
+      });
+  };
+  const [alert, setAlert] = React.useState(false);
+  const [alertSuccess, setAlertSuccess] = React.useState(false);
+
+  const createThemeFunc = (e) => {
+    const desc = e.target[2].value;
+    const title = e.target[0].value;
+    e.preventDefault();
+    fetch("https://api.mymemories.uz/api/v1/memories", {
+      method: "POST",
+      headers: {
+        Authorization: "Token " + userToken.token,
+        "Content-Type": "Application/json",
+      },
+      body: JSON.stringify({
+        title: title,
+        desc: desc,
+        media: JSON.stringify(img),
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.success) {
+          setAlert(true);
+          setAlertSuccess(true);
+        }
+      });
+  };
 
   return (
     <div className="home">
+      <div className="alert">
+        {alertSuccess ? (
+          alert ? (
+            <Alert severity="success">
+              <AlertTitle>Success</AlertTitle>
+              This is a success alert — <strong>check it out!</strong>
+            </Alert>
+          ) : (
+            ""
+          )
+        ) : (
+          <Alert severity="error">
+            <AlertTitle>Success</AlertTitle>
+            This is a success alert — <strong>check it out!</strong>
+          </Alert>
+        )}
+
+        <Alert severity="success">
+          <AlertTitle>Success</AlertTitle>
+          This is a success alert — <strong>check it out!</strong>
+        </Alert>
+      </div>
+
+      <audio ref={musicPlay} src={music}></audio>
+      {createTheme ? (
+        <div className="createTheme">
+          <div>
+            <div
+              style={{
+                display: "flex",
+                alignItmes: "center",
+                justifyContent: "space-around",
+              }}
+            >
+              <img src={createLogo} alt="sitelogoCreateMemory" />
+              <Close onClick={() => setCreateTheme(false)} color="#12a7fb" />
+            </div>
+            <div>
+              <form onSubmit={(e) => createThemeFunc(e)}>
+                <div>
+                  {" "}
+                  <TextField
+                    style={{ marginBottom: "50px", width: "450px" }}
+                    required
+                    type="text"
+                    label="Enter title"
+                    variant="standard"
+                  />
+                  <Edit color="#fff" style={{ marginLeft: "-20px" }} />
+                </div>
+                <div>
+                  {" "}
+                  <TextField
+                    onChange={(e) => imgUpdate(e)}
+                    style={{ marginBottom: "50px", width: "450px" }}
+                    required
+                    type="file"
+                    label="Enter img"
+                    variant="standard"
+                  />
+                  <Edit color="#fff" style={{ marginLeft: "-20px" }} />
+                </div>
+                <div>
+                  {" "}
+                  <TextField
+                    style={{ marginBottom: "50px", width: "450px" }}
+                    required
+                    type="text"
+                    label="Enter description"
+                    variant="standard"
+                  />
+                  <Edit color="#fff" style={{ marginLeft: "-20px" }} />
+                </div>
+                <div>
+                  {" "}
+                  <Button
+                    type="submit"
+                    variant="outlined"
+                    style={{
+                      borderRadius: "25px",
+                      marginTop: "37px",
+                      padding: "13px 41px",
+                      marginRight: "20px",
+                    }}
+                  >
+                    CREATE
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => setCreateTheme(false)}
+                    variant="outlined"
+                    style={{
+                      borderRadius: "25px",
+                      borderColor: "#fff",
+                      marginTop: "37px",
+                      padding: "13px 41px",
+                      color: "#fff",
+                    }}
+                  >
+                    CANCEL
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      ) : (
+        ""
+      )}
+
+      {editTheme ? (
+        <div className="createTheme">
+          <div>
+            <div
+              style={{
+                display: "flex",
+                alignItmes: "center",
+                justifyContent: "space-around",
+              }}
+            >
+              <img
+                style={{ marginRight: "20px" }}
+                src={editMemories}
+                alt="sitelogoEditMemory"
+              />
+              <img src={myPlaylist} alt="sitelogoPlaylist" />
+              <Close onClick={() => setEditTheme(false)} color="#12a7fb" />
+            </div>
+            <div>
+              <form onSubmit={(e) => createThemeFunc(e)}>
+                <div>
+                  {" "}
+                  <TextField
+                    style={{ marginBottom: "50px", width: "450px" }}
+                    required
+                    type="text"
+                    label="Enter title"
+                    variant="standard"
+                  />
+                  <Edit color="#fff" style={{ marginLeft: "-20px" }} />
+                </div>
+                <div>
+                  {" "}
+                  <TextField
+                    style={{ marginBottom: "50px", width: "450px" }}
+                    required
+                    type="file"
+                    label="Enter img"
+                    variant="standard"
+                  />
+                  <Edit color="#fff" style={{ marginLeft: "-20px" }} />
+                </div>
+                <div>
+                  {" "}
+                  <TextField
+                    style={{ marginBottom: "50px", width: "450px" }}
+                    required
+                    type="text"
+                    label="Enter description"
+                    variant="standard"
+                  />
+                  <Edit color="#fff" style={{ marginLeft: "-20px" }} />
+                </div>
+                <div>
+                  {" "}
+                  <Button
+                    type="submit"
+                    variant="outlined"
+                    style={{
+                      borderRadius: "25px",
+                      marginTop: "37px",
+                      padding: "13px 41px",
+                      marginRight: "20px",
+                    }}
+                  >
+                    CREATE
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => setEditTheme(false)}
+                    variant="outlined"
+                    style={{
+                      borderRadius: "25px",
+                      borderColor: "#fff",
+                      marginTop: "37px",
+                      padding: "13px 41px",
+                      color: "#fff",
+                    }}
+                  >
+                    CANCEL
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      ) : (
+        ""
+      )}
+
       <Container
         style={{
           padding: "0",
@@ -92,6 +370,7 @@ export const Home = () => {
               <img src={logo} alt="site logo" />
             </Link>
             <Button
+              onClick={() => setCreateTheme(true)}
               style={{
                 borderRadius: "25px",
                 width: "230px",
@@ -986,6 +1265,7 @@ export const Home = () => {
                     <Delete />
                   </Avatar>
                   <Avatar
+                    onClick={() => setEditTheme(true)}
                     style={{
                       backgroundColor: "transparent",
                       border: "2px solid #fff",

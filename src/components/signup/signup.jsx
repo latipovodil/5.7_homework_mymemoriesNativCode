@@ -12,9 +12,14 @@ export const Signup = () => {
     email: "",
     password: "",
   });
+  const newValue = {
+    username: value.username,
+    password: value.password
+  }
 
   const submit = (e) => {
     e.preventDefault();
+
     fetch("https://api.mymemories.uz/api/v1/users/register", {
       method: "POST",
       headers: {
@@ -24,20 +29,25 @@ export const Signup = () => {
     })
       .then((respon) => respon.json())
       .then((data) => {
-        console.log(data.succes);
         if (data.succes) {
+
           fetch("https://api.mymemories.uz/api/v1/login", {
             method: "POST",
             headers: {
               "Content-Type": "Application/json",
             },
-            body: JSON.stringify({
-              username: value.username,
-              password: value.password,
-            }),
+            body: JSON.stringify(newValue),
           })
             .then((respon) => respon.json())
             .then((userData) => {
+              
+              if (userData.success) {
+                window.location.href = window.location.origin;
+                localStorage.setItem(
+                  "userHome",
+                  JSON.stringify({ user: true })
+                );
+              }
               localStorage.setItem(
                 "user",
                 JSON.stringify({ token: userData.token, id: userData.data.id })
