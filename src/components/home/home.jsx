@@ -29,6 +29,8 @@ import like from "../imgs/like.svg";
 import dontLike from "../imgs/don'tLike.svg";
 import Close from "@mui/icons-material/Close";
 import music from "../music/a.m4a";
+import { AlertTitle } from "@mui/material";
+import { Alert } from "@mui/material";
 
 export const Home = () => {
   const userHomeKey = JSON.parse(localStorage.getItem("userHome"));
@@ -157,26 +159,14 @@ export const Home = () => {
   return (
     <div className="home">
       <div className="alert">
-        {alertSuccess ? (
-          alert ? (
-            <Alert severity="success">
-              <AlertTitle>Success</AlertTitle>
-              This is a success alert — <strong>check it out!</strong>
-            </Alert>
-          ) : (
-            ""
-          )
-        ) : (
-          <Alert severity="error">
+        {alert ? (
+          <Alert severity="success">
             <AlertTitle>Success</AlertTitle>
             This is a success alert — <strong>check it out!</strong>
           </Alert>
+        ) : (
+          ""
         )}
-
-        <Alert severity="success">
-          <AlertTitle>Success</AlertTitle>
-          This is a success alert — <strong>check it out!</strong>
-        </Alert>
       </div>
 
       <audio ref={musicPlay} src={music}></audio>
